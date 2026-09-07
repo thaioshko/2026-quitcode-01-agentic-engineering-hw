@@ -12,11 +12,15 @@ export function TodayPage({
   density,
   onAdd,
   onToggle,
+  onSetPriority,
+  onSetDueDate,
 }: {
   tasks: Task[]
   density: Preferences['density']
   onAdd: (input: NewTaskInput) => void
   onToggle: (id: string) => void
+  onSetPriority: (id: string, priority: Task['priority']) => void
+  onSetDueDate: (id: string, dueAt: number | undefined) => void
 }) {
   const [filter, setFilter] = useState<SpaceFilter>('all')
 
@@ -24,8 +28,9 @@ export function TodayPage({
     onAdd({ ...result, space: filter === 'personal' ? 'personal' : 'work', priority: 'none' })
   }
 
-  const scheduled = tasks.filter((t) => t.dueAt !== undefined)
-  const visible = scheduled.filter((t) => filter === 'all' || t.space === filter)
+  // Today shows every task (scheduled or not) — Inbox is a convenience filter
+  // for triaging undated ones, not the only place they're visible.
+  const visible = tasks.filter((t) => filter === 'all' || t.space === filter)
   const { focus, other } = selectFocus(visible)
   const today = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
 
@@ -64,7 +69,14 @@ export function TodayPage({
             <section className="flex flex-col gap-1">
               <h2 className="text-sm font-semibold text-secondary">Focus</h2>
               {focus.map((task) => (
-                <TaskItem key={task.id} task={task} density={density} onToggle={() => onToggle(task.id)} />
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  density={density}
+                  onToggle={() => onToggle(task.id)}
+                  onSetPriority={(priority) => onSetPriority(task.id, priority)}
+                  onSetDueDate={(dueAt) => onSetDueDate(task.id, dueAt)}
+                />
               ))}
             </section>
           )}
@@ -72,7 +84,14 @@ export function TodayPage({
             <section className="flex flex-col gap-1">
               <h2 className="text-sm font-semibold text-secondary">Other tasks</h2>
               {other.map((task) => (
-                <TaskItem key={task.id} task={task} density={density} onToggle={() => onToggle(task.id)} />
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  density={density}
+                  onToggle={() => onToggle(task.id)}
+                  onSetPriority={(priority) => onSetPriority(task.id, priority)}
+                  onSetDueDate={(dueAt) => onSetDueDate(task.id, dueAt)}
+                />
               ))}
             </section>
           )}

@@ -119,13 +119,22 @@ function App() {
                 view === v ? 'border-accent text-primary' : 'border-transparent text-secondary'
               }`}
             >
-              {v === 'inbox' && inboxCount > 0 ? `Inbox (${inboxCount})` : v === 'focus' ? 'Focus' : 'Today'}
+              {v === 'today' ? 'Today' : v === 'focus' ? 'Focus' : inboxCount > 0 ? `Inbox (${inboxCount})` : 'Inbox'}
             </button>
           ))}
         </div>
 
         <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-12">
-          {view === 'today' && <TodayPage tasks={tasks} density={prefs.density} onAdd={addTask} onToggle={toggleTask} />}
+          {view === 'today' && (
+            <TodayPage
+              tasks={tasks}
+              density={prefs.density}
+              onAdd={addTask}
+              onToggle={toggleTask}
+              onSetPriority={(id, priority) => updateTask(id, { priority })}
+              onSetDueDate={(id, dueAt) => updateTask(id, { dueAt })}
+            />
+          )}
           {view === 'inbox' && (
             <InboxPage
               tasks={tasks}
