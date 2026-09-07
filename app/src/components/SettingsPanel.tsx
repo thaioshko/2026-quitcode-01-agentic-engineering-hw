@@ -1,10 +1,10 @@
 import type { Preferences } from '../lib/preferences'
 
 const ACCENTS: { value: Preferences['accent']; swatch: string }[] = [
+  { value: 'coral', swatch: '#d9603b' },
   { value: 'violet', swatch: '#6d4aff' },
   { value: 'blue', swatch: '#3568d4' },
   { value: 'mint', swatch: '#1f8a55' },
-  { value: 'coral', swatch: '#d9603b' },
   { value: 'orange', swatch: '#c9820a' },
 ]
 

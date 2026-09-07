@@ -6,7 +6,7 @@ export interface Preferences {
 
 export const DEFAULT_PREFERENCES: Preferences = {
   theme: 'system',
-  accent: 'violet',
+  accent: 'coral',
   density: 'comfortable',
 }
 
