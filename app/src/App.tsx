@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { QuickAdd, type QuickAddResult } from './components/QuickAdd'
 import { TaskItem } from './components/TaskItem'
+import { selectFocus } from './lib/focus'
 import type { Task } from './lib/types'
 
 const TASKS_KEY = 'task-tracker:tasks'
@@ -42,6 +43,7 @@ function App() {
   }
 
   const visible = tasks.filter((t) => filter === 'all' || t.space === filter)
+  const { focus, other } = selectFocus(visible)
   const today = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
 
   return (
@@ -70,15 +72,30 @@ function App() {
           ))}
         </div>
 
-        <section className="flex flex-col gap-1">
-          {visible.length === 0 ? (
-            <p className="rounded-md border border-border bg-surface-subtle p-4 text-sm text-secondary">
-              You're clear for today. Use Quick Add above to capture something.
-            </p>
-          ) : (
-            visible.map((task) => <TaskItem key={task.id} task={task} onToggle={() => toggleTask(task.id)} />)
-          )}
-        </section>
+        {visible.length === 0 ? (
+          <p className="rounded-md border border-border bg-surface-subtle p-4 text-sm text-secondary">
+            You're clear for today. Use Quick Add above to capture something.
+          </p>
+        ) : (
+          <>
+            {focus.length > 0 && (
+              <section className="flex flex-col gap-1">
+                <h2 className="text-sm font-semibold text-secondary">Focus</h2>
+                {focus.map((task) => (
+                  <TaskItem key={task.id} task={task} onToggle={() => toggleTask(task.id)} />
+                ))}
+              </section>
+            )}
+            {other.length > 0 && (
+              <section className="flex flex-col gap-1">
+                <h2 className="text-sm font-semibold text-secondary">Other tasks</h2>
+                {other.map((task) => (
+                  <TaskItem key={task.id} task={task} onToggle={() => toggleTask(task.id)} />
+                ))}
+              </section>
+            )}
+          </>
+        )}
       </main>
     </div>
   )
