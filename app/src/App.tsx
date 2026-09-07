@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Button } from './components/Button'
 import { QuickAdd, type QuickAddResult } from './components/QuickAdd'
 import { SettingsPanel } from './components/SettingsPanel'
 import { TaskItem } from './components/TaskItem'
@@ -79,12 +80,13 @@ function App() {
             <p className="mt-1 text-sm text-secondary">{today}</p>
           </div>
           <div className="relative">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => setSettingsOpen((v) => !v)}
               aria-label="Settings"
               aria-expanded={settingsOpen}
-              className="flex h-9 w-9 items-center justify-center rounded-sm border border-border bg-surface text-secondary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="w-9 px-0"
             >
               <svg viewBox="0 0 16 16" width="16" height="16" fill="none">
                 <path
@@ -99,7 +101,7 @@ function App() {
                   strokeLinecap="round"
                 />
               </svg>
-            </button>
+            </Button>
             {settingsOpen && <SettingsPanel prefs={prefs} onChange={setPrefs} onClose={() => setSettingsOpen(false)} />}
           </div>
         </header>
