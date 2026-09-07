@@ -46,7 +46,7 @@ export function SettingsPanel({
   onClose: () => void
 }) {
   return (
-    <div className="absolute top-full right-0 z-10 mt-2 flex w-64 flex-col gap-4 rounded-md border border-border bg-surface p-4 shadow-lg">
+    <div className="flex w-64 flex-col gap-4 rounded-md border border-border bg-surface p-4 shadow-lg">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-primary">Settings</h2>
         <button type="button" onClick={onClose} aria-label="Close settings" className="text-secondary hover:text-primary">

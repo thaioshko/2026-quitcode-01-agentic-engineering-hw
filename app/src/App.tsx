@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Button } from './components/Button'
-import { QuickAdd, type QuickAddResult } from './components/QuickAdd'
 import { SettingsPanel } from './components/SettingsPanel'
-import { TaskItem } from './components/TaskItem'
-import { selectFocus } from './lib/focus'
+import { Sidebar, type View } from './components/Sidebar'
 import { loadPreferences, resolveTheme, savePreferences, type Preferences } from './lib/preferences'
-import type { Task } from './lib/types'
+import type { NewTaskInput, Task } from './lib/types'
+import { FocusModePage } from './pages/FocusModePage'
+import { InboxPage } from './pages/InboxPage'
+import { TodayPage } from './pages/TodayPage'
 
 const TASKS_KEY = 'task-tracker:tasks'
-type SpaceFilter = 'all' | 'work' | 'personal'
 
 function loadTasks(): Task[] {
   try {
@@ -21,9 +21,9 @@ function loadTasks(): Task[] {
 
 function App() {
   const [tasks, setTasks] = useState<Task[]>(() => loadTasks())
-  const [filter, setFilter] = useState<SpaceFilter>('all')
   const [prefs, setPrefs] = useState<Preferences>(() => loadPreferences())
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [view, setView] = useState<View>('today')
+  const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false)
 
   useEffect(() => {
     localStorage.setItem(TASKS_KEY, JSON.stringify(tasks))
@@ -49,14 +49,14 @@ function App() {
     document.documentElement.dataset.accent = prefs.accent
   }, [prefs.accent])
 
-  function addTask(result: QuickAddResult) {
+  function addTask(input: NewTaskInput) {
     const task: Task = {
       id: crypto.randomUUID(),
-      title: result.title,
-      space: filter === 'personal' ? 'personal' : 'work',
-      priority: 'none',
-      dueAt: result.dueAt,
-      estimatedMinutes: result.estimatedMinutes,
+      title: input.title,
+      space: input.space,
+      priority: input.priority ?? 'none',
+      dueAt: input.dueAt,
+      estimatedMinutes: input.estimatedMinutes,
       completed: false,
       createdAt: Date.now(),
     }
@@ -67,88 +67,80 @@ function App() {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)))
   }
 
-  const visible = tasks.filter((t) => filter === 'all' || t.space === filter)
-  const { focus, other } = selectFocus(visible)
-  const today = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
+  function updateTask(id: string, patch: Partial<Task>) {
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)))
+  }
+
+  function deleteTask(id: string) {
+    setTasks((prev) => prev.filter((t) => t.id !== id))
+  }
+
+  const inboxCount = tasks.filter((t) => t.dueAt === undefined && !t.completed).length
 
   return (
-    <div className="min-h-screen bg-canvas text-primary">
-      <main className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-12">
-        <header className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-primary">Today</h1>
-            <p className="mt-1 text-sm text-secondary">{today}</p>
-          </div>
-          <div className="relative">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setSettingsOpen((v) => !v)}
-              aria-label="Settings"
-              aria-expanded={settingsOpen}
-              className="w-9 px-0"
-            >
-              <svg viewBox="0 0 16 16" width="16" height="16" fill="none">
-                <path
-                  d="M8 5.5A2.5 2.5 0 1 0 8 10.5 2.5 2.5 0 0 0 8 5.5Z"
-                  stroke="currentColor"
-                  strokeWidth="1.3"
-                />
-                <path
-                  d="M8 1.5v1.3M8 13.2v1.3M14.5 8h-1.3M2.8 8H1.5M12.4 3.6l-.9.9M4.5 11.5l-.9.9M12.4 12.4l-.9-.9M4.5 4.5l-.9-.9"
-                  stroke="currentColor"
-                  strokeWidth="1.3"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </Button>
-            {settingsOpen && <SettingsPanel prefs={prefs} onChange={setPrefs} onClose={() => setSettingsOpen(false)} />}
-          </div>
-        </header>
+    <div className="flex min-h-screen bg-canvas text-primary">
+      <Sidebar view={view} onChange={setView} inboxCount={inboxCount} prefs={prefs} onPrefsChange={setPrefs} />
 
-        <QuickAdd onAdd={addTask} />
+      <div className="flex flex-1 flex-col">
+        <div className="relative flex justify-end px-6 pt-6 sm:hidden">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setMobileSettingsOpen((v) => !v)}
+            aria-label="Settings"
+            aria-expanded={mobileSettingsOpen}
+            className="w-9 px-0"
+          >
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="none">
+              <path d="M8 5.5A2.5 2.5 0 1 0 8 10.5 2.5 2.5 0 0 0 8 5.5Z" stroke="currentColor" strokeWidth="1.3" />
+              <path
+                d="M8 1.5v1.3M8 13.2v1.3M14.5 8h-1.3M2.8 8H1.5M12.4 3.6l-.9.9M4.5 11.5l-.9.9M12.4 12.4l-.9-.9M4.5 4.5l-.9-.9"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+              />
+            </svg>
+          </Button>
+          {mobileSettingsOpen && (
+            <div className="absolute top-full right-6 z-10 mt-2">
+              <SettingsPanel prefs={prefs} onChange={setPrefs} onClose={() => setMobileSettingsOpen(false)} />
+            </div>
+          )}
+        </div>
 
-        <div className="inline-flex w-fit rounded-sm border border-border bg-surface-subtle p-0.5">
-          {(['all', 'work', 'personal'] as const).map((f) => (
+        <div className="flex sm:hidden">
+          {(['today', 'inbox', 'focus'] as const).map((v) => (
             <button
-              key={f}
+              key={v}
               type="button"
-              onClick={() => setFilter(f)}
-              aria-pressed={filter === f}
-              className={`rounded-xs px-3 py-1 text-sm font-medium capitalize transition-colors ${
-                filter === f ? 'bg-surface text-primary shadow-sm' : 'text-secondary hover:text-primary'
+              onClick={() => setView(v)}
+              aria-current={view === v ? 'page' : undefined}
+              className={`flex-1 border-b-2 py-2 text-sm font-medium capitalize ${
+                view === v ? 'border-accent text-primary' : 'border-transparent text-secondary'
               }`}
             >
-              {f}
+              {v === 'inbox' && inboxCount > 0 ? `Inbox (${inboxCount})` : v === 'focus' ? 'Focus' : 'Today'}
             </button>
           ))}
         </div>
 
-        {visible.length === 0 ? (
-          <p className="rounded-md border border-border bg-surface-subtle p-4 text-sm text-secondary">
-            You're clear for today. Use Quick Add above to capture something.
-          </p>
-        ) : (
-          <>
-            {focus.length > 0 && (
-              <section className="flex flex-col gap-1">
-                <h2 className="text-sm font-semibold text-secondary">Focus</h2>
-                {focus.map((task) => (
-                  <TaskItem key={task.id} task={task} density={prefs.density} onToggle={() => toggleTask(task.id)} />
-                ))}
-              </section>
-            )}
-            {other.length > 0 && (
-              <section className="flex flex-col gap-1">
-                <h2 className="text-sm font-semibold text-secondary">Other tasks</h2>
-                {other.map((task) => (
-                  <TaskItem key={task.id} task={task} density={prefs.density} onToggle={() => toggleTask(task.id)} />
-                ))}
-              </section>
-            )}
-          </>
-        )}
-      </main>
+        <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-12">
+          {view === 'today' && <TodayPage tasks={tasks} density={prefs.density} onAdd={addTask} onToggle={toggleTask} />}
+          {view === 'inbox' && (
+            <InboxPage
+              tasks={tasks}
+              onSchedule={(id) => {
+                const startOfToday = new Date()
+                startOfToday.setHours(0, 0, 0, 0)
+                updateTask(id, { dueAt: startOfToday.getTime() })
+              }}
+              onToggleSpace={(id, space) => updateTask(id, { space })}
+              onDelete={deleteTask}
+            />
+          )}
+          {view === 'focus' && <FocusModePage tasks={tasks} onComplete={toggleTask} onAddSubtask={addTask} />}
+        </main>
+      </div>
     </div>
   )
 }

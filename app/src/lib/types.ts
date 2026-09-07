@@ -8,3 +8,6 @@ export interface Task {
   completed: boolean
   createdAt: number
 }
+
+export type NewTaskInput = Pick<Task, 'title' | 'space'> &
+  Partial<Pick<Task, 'priority' | 'dueAt' | 'estimatedMinutes'>>
