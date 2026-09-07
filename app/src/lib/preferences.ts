@@ -12,17 +12,30 @@ export const DEFAULT_PREFERENCES: Preferences = {
 
 const PREFS_KEY = 'task-tracker:preferences'
 
+// Bump this when DEFAULT_PREFERENCES changes in a way that should reach
+// existing visitors (e.g. a new default accent) — stale stored preferences
+// from an older version are discarded instead of silently overriding it.
+const PREFS_VERSION = 2
+
+interface StoredPreferences extends Preferences {
+  version: number
+}
+
 export function loadPreferences(): Preferences {
   try {
     const raw = localStorage.getItem(PREFS_KEY)
-    return raw ? { ...DEFAULT_PREFERENCES, ...(JSON.parse(raw) as Partial<Preferences>) } : DEFAULT_PREFERENCES
+    if (!raw) return DEFAULT_PREFERENCES
+    const parsed = JSON.parse(raw) as Partial<StoredPreferences>
+    if (parsed.version !== PREFS_VERSION) return DEFAULT_PREFERENCES
+    return { ...DEFAULT_PREFERENCES, ...parsed }
   } catch {
     return DEFAULT_PREFERENCES
   }
 }
 
 export function savePreferences(prefs: Preferences) {
-  localStorage.setItem(PREFS_KEY, JSON.stringify(prefs))
+  const stored: StoredPreferences = { ...prefs, version: PREFS_VERSION }
+  localStorage.setItem(PREFS_KEY, JSON.stringify(stored))
 }
 
 export function resolveTheme(theme: Preferences['theme']): 'light' | 'dark' {
