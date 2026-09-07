@@ -1,125 +1,82 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { Button } from './components/Button'
-import { Field } from './components/Field'
-import { LeadBadge } from './components/LeadBadge'
+import { useEffect, useState } from 'react'
+import { QuickAdd, type QuickAddResult } from './components/QuickAdd'
+import { TaskItem } from './components/TaskItem'
+import type { Task } from './lib/types'
 
-interface Lead {
-  id: string
-  name: string
-  email: string
-  budget: number
-  message: string
-  createdAt: number
-}
+const TASKS_KEY = 'task-tracker:tasks'
+type SpaceFilter = 'all' | 'work' | 'personal'
 
-const STORAGE_KEY = 'lead-desk:leads'
-
-function isHot(lead: Pick<Lead, 'budget' | 'message'>) {
-  return lead.budget >= 1000 || /urgent/i.test(lead.message)
-}
-
-function loadLeads(): Lead[] {
+function loadTasks(): Task[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as Lead[]) : []
+    const raw = localStorage.getItem(TASKS_KEY)
+    return raw ? (JSON.parse(raw) as Task[]) : []
   } catch {
     return []
   }
 }
 
 function App() {
-  const [leads, setLeads] = useState<Lead[]>(() => loadLeads())
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [budget, setBudget] = useState('')
-  const [message, setMessage] = useState('')
+  const [tasks, setTasks] = useState<Task[]>(() => loadTasks())
+  const [filter, setFilter] = useState<SpaceFilter>('all')
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(leads))
-  }, [leads])
+    localStorage.setItem(TASKS_KEY, JSON.stringify(tasks))
+  }, [tasks])
 
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault()
-    const lead: Lead = {
+  function addTask(result: QuickAddResult) {
+    const task: Task = {
       id: crypto.randomUUID(),
-      name,
-      email,
-      budget: Number(budget) || 0,
-      message,
+      title: result.title,
+      space: filter === 'personal' ? 'personal' : 'work',
+      priority: 'none',
+      dueAt: result.dueAt,
+      estimatedMinutes: result.estimatedMinutes,
+      completed: false,
       createdAt: Date.now(),
     }
-    setLeads((prev) => [lead, ...prev])
-    setName('')
-    setEmail('')
-    setBudget('')
-    setMessage('')
+    setTasks((prev) => [task, ...prev])
   }
+
+  function toggleTask(id: string) {
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)))
+  }
+
+  const visible = tasks.filter((t) => filter === 'all' || t.space === filter)
+  const today = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
 
   return (
     <div className="min-h-screen bg-canvas text-primary">
-      <main className="mx-auto flex max-w-2xl flex-col gap-8 px-6 py-12">
+      <main className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-12">
         <header>
-          <h1 className="text-2xl font-semibold text-primary">Lead Desk</h1>
-          <p className="mt-1 text-sm text-secondary">Capture and triage incoming leads.</p>
+          <h1 className="text-2xl font-semibold text-primary">Today</h1>
+          <p className="mt-1 text-sm text-secondary">{today}</p>
         </header>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-md border border-border bg-surface p-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Field id="name" label="Name" value={name} onChange={(e) => setName(e.target.value)} required />
-            <Field id="email" label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </div>
-          <Field
-            id="budget"
-            label="Budget ($)"
-            type="number"
-            min={0}
-            value={budget}
-            onChange={(e) => setBudget(e.target.value)}
-          />
-          <Field
-            id="message"
-            label="Message"
-            multiline
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="What do they need? Mention 'urgent' if it's time-sensitive."
-          />
-          <div>
-            <Button type="submit">Add lead</Button>
-          </div>
-        </form>
+        <QuickAdd onAdd={addTask} />
 
-        <section className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-secondary">
-              {leads.length} lead{leads.length === 1 ? '' : 's'}
-            </h2>
-            {leads.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={() => setLeads([])}>
-                Clear all
-              </Button>
-            )}
-          </div>
+        <div className="inline-flex w-fit rounded-sm border border-border bg-surface-subtle p-0.5">
+          {(['all', 'work', 'personal'] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setFilter(f)}
+              aria-pressed={filter === f}
+              className={`rounded-xs px-3 py-1 text-sm font-medium capitalize transition-colors ${
+                filter === f ? 'bg-surface text-primary shadow-sm' : 'text-secondary hover:text-primary'
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
 
-          {leads.length === 0 ? (
+        <section className="flex flex-col gap-1">
+          {visible.length === 0 ? (
             <p className="rounded-md border border-border bg-surface-subtle p-4 text-sm text-secondary">
-              No leads yet — submit the form above to add one.
+              You're clear for today. Use Quick Add above to capture something.
             </p>
           ) : (
-            <ul className="flex flex-col divide-y divide-border rounded-md border border-border bg-surface">
-              {leads.map((lead) => (
-                <li key={lead.id} className="flex flex-col gap-1 p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium text-primary">{lead.name}</span>
-                    <LeadBadge hot={isHot(lead)} />
-                  </div>
-                  <div className="text-xs text-secondary">
-                    {lead.email} · ${lead.budget.toLocaleString()}
-                  </div>
-                  {lead.message && <p className="text-sm text-primary">{lead.message}</p>}
-                </li>
-              ))}
-            </ul>
+            visible.map((task) => <TaskItem key={task.id} task={task} onToggle={() => toggleTask(task.id)} />)
           )}
         </section>
       </main>
