@@ -66,6 +66,42 @@
   --color-study: #d99b2b;
 }
 
+[data-accent='blue'] {
+  --color-accent: #3568d4;
+  --color-accent-hover: #2a56b3;
+}
+[data-theme='dark'][data-accent='blue'] {
+  --color-accent: #6f96e8;
+  --color-accent-hover: #86a6ee;
+}
+
+[data-accent='mint'] {
+  --color-accent: #1f8a55;
+  --color-accent-hover: #186f44;
+}
+[data-theme='dark'][data-accent='mint'] {
+  --color-accent: #3fb87a;
+  --color-accent-hover: #56c78d;
+}
+
+[data-accent='coral'] {
+  --color-accent: #d9603b;
+  --color-accent-hover: #c14f2c;
+}
+[data-theme='dark'][data-accent='coral'] {
+  --color-accent: #f08858;
+  --color-accent-hover: #f5966a;
+}
+
+[data-accent='orange'] {
+  --color-accent: #c9820a;
+  --color-accent-hover: #a86b06;
+}
+[data-theme='dark'][data-accent='orange'] {
+  --color-accent: #e0a94a;
+  --color-accent-hover: #e8bd6e;
+}
+
 @theme inline {
   --font-sans: 'Inter', system-ui, sans-serif;
 
