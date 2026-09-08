@@ -39,12 +39,14 @@ export function TaskItem({
   onToggle,
   onSetPriority,
   onSetDueDate,
+  onSetSpace,
   density = 'comfortable',
 }: {
   task: Task
   onToggle: () => void
   onSetPriority?: (priority: Task['priority']) => void
   onSetDueDate?: (dueAt: number | undefined) => void
+  onSetSpace?: (space: Task['space']) => void
   density?: 'compact' | 'comfortable' | 'detailed'
 }) {
   const [editingDate, setEditingDate] = useState(false)
@@ -90,8 +92,21 @@ export function TaskItem({
         <div className={`truncate text-sm ${task.completed ? 'text-tertiary line-through' : 'text-primary'}`}>{task.title}</div>
         {density !== 'compact' && (
           <div className="mt-0.5 flex items-center gap-1.5 text-xs text-secondary">
-            <span className={`h-1.5 w-1.5 rounded-full ${spaceDot[task.space]}`} />
-            {task.space === 'work' ? 'Work' : 'Personal'}
+            {onSetSpace ? (
+              <button
+                type="button"
+                onClick={() => onSetSpace(task.space === 'work' ? 'personal' : 'work')}
+                className="flex items-center gap-1.5 hover:text-primary"
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${spaceDot[task.space]}`} />
+                {task.space === 'work' ? 'Work' : 'Personal'}
+              </button>
+            ) : (
+              <>
+                <span className={`h-1.5 w-1.5 rounded-full ${spaceDot[task.space]}`} />
+                {task.space === 'work' ? 'Work' : 'Personal'}
+              </>
+            )}
             {density === 'detailed' && task.estimatedMinutes && <span>· {task.estimatedMinutes}m</span>}
           </div>
         )}

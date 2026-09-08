@@ -34,7 +34,21 @@ export function FocusModePage({
 
   const { focus } = selectFocus(tasks, new Date(), 50)
   const queue = focus.filter((t) => !skipped.has(t.id))
-  const current = queue[0]
+
+  // The active task is pinned by id, not re-derived from the live-resorting
+  // queue every render — otherwise another task becoming overdue mid-session
+  // would silently swap out whatever the user is actively working on and
+  // reset their timer. A new task is only picked when the pinned one is no
+  // longer in the queue (completed, skipped, or deleted).
+  const [currentId, setCurrentId] = useState<string | null>(queue[0]?.id ?? null)
+  const queueIds = queue.map((t) => t.id).join(',')
+  useEffect(() => {
+    if (currentId && queue.some((t) => t.id === currentId)) return
+    setCurrentId(queue[0]?.id ?? null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queueIds])
+
+  const current = queue.find((t) => t.id === currentId)
 
   const defaultSeconds = (current?.estimatedMinutes ?? 25) * 60
   const [secondsLeft, setSecondsLeft] = useState(defaultSeconds)
@@ -46,7 +60,8 @@ export function FocusModePage({
     setCantStartReason(null)
     setBreakDownOpen(false)
     setAddedSubtasks([])
-  }, [current?.id])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentId])
 
   useEffect(() => {
     if (!running) return

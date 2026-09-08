@@ -14,6 +14,7 @@ export function TodayPage({
   onToggle,
   onSetPriority,
   onSetDueDate,
+  onSetSpace,
 }: {
   tasks: Task[]
   density: Preferences['density']
@@ -21,6 +22,7 @@ export function TodayPage({
   onToggle: (id: string) => void
   onSetPriority: (id: string, priority: Task['priority']) => void
   onSetDueDate: (id: string, dueAt: number | undefined) => void
+  onSetSpace: (id: string, space: Task['space']) => void
 }) {
   const [filter, setFilter] = useState<SpaceFilter>('all')
 
@@ -76,6 +78,7 @@ export function TodayPage({
                   onToggle={() => onToggle(task.id)}
                   onSetPriority={(priority) => onSetPriority(task.id, priority)}
                   onSetDueDate={(dueAt) => onSetDueDate(task.id, dueAt)}
+                  onSetSpace={(space) => onSetSpace(task.id, space)}
                 />
               ))}
             </section>
@@ -91,6 +94,7 @@ export function TodayPage({
                   onToggle={() => onToggle(task.id)}
                   onSetPriority={(priority) => onSetPriority(task.id, priority)}
                   onSetDueDate={(dueAt) => onSetDueDate(task.id, dueAt)}
+                  onSetSpace={(space) => onSetSpace(task.id, space)}
                 />
               ))}
             </section>

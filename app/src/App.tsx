@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Button } from './components/Button'
 import { SettingsPanel } from './components/SettingsPanel'
 import { Sidebar, type View } from './components/Sidebar'
+import { UndoToast } from './components/UndoToast'
 import { generateId } from './lib/id'
 import { loadPreferences, resolveTheme, savePreferences, type Preferences } from './lib/preferences'
 import { isTask, type NewTaskInput, type Task } from './lib/types'
@@ -30,6 +31,13 @@ function App() {
   const [prefs, setPrefs] = useState<Preferences>(() => loadPreferences())
   const [view, setView] = useState<View>('today')
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<{ task: Task; timeoutId: number } | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (pendingDelete) clearTimeout(pendingDelete.timeoutId)
+    }
+  }, [pendingDelete])
 
   useEffect(() => {
     try {
@@ -83,7 +91,21 @@ function App() {
   }
 
   function deleteTask(id: string) {
-    setTasks((prev) => prev.filter((t) => t.id !== id))
+    setTasks((prev) => {
+      const task = prev.find((t) => t.id === id)
+      if (!task) return prev
+      if (pendingDelete) clearTimeout(pendingDelete.timeoutId)
+      const timeoutId = window.setTimeout(() => setPendingDelete(null), 5000)
+      setPendingDelete({ task, timeoutId })
+      return prev.filter((t) => t.id !== id)
+    })
+  }
+
+  function undoDelete() {
+    if (!pendingDelete) return
+    clearTimeout(pendingDelete.timeoutId)
+    setTasks((prev) => [pendingDelete.task, ...prev])
+    setPendingDelete(null)
   }
 
   const inboxCount = tasks.filter((t) => t.dueAt === undefined && !t.completed).length
@@ -144,6 +166,7 @@ function App() {
               onToggle={toggleTask}
               onSetPriority={(id, priority) => updateTask(id, { priority })}
               onSetDueDate={(id, dueAt) => updateTask(id, { dueAt })}
+              onSetSpace={(id, space) => updateTask(id, { space })}
             />
           )}
           {view === 'inbox' && (
@@ -161,6 +184,8 @@ function App() {
           {view === 'focus' && <FocusModePage tasks={tasks} onComplete={toggleTask} onAddSubtask={addTask} />}
         </main>
       </div>
+
+      {pendingDelete && <UndoToast message={`Deleted "${pendingDelete.task.title}"`} onUndo={undoDelete} />}
     </div>
   )
 }
