@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Button } from './components/Button'
 import { SettingsPanel } from './components/SettingsPanel'
 import { Sidebar, type View } from './components/Sidebar'
+import { generateId } from './lib/id'
 import { loadPreferences, resolveTheme, savePreferences, type Preferences } from './lib/preferences'
 import type { NewTaskInput, Task } from './lib/types'
 import { FocusModePage } from './pages/FocusModePage'
@@ -26,7 +27,12 @@ function App() {
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false)
 
   useEffect(() => {
-    localStorage.setItem(TASKS_KEY, JSON.stringify(tasks))
+    try {
+      localStorage.setItem(TASKS_KEY, JSON.stringify(tasks))
+    } catch {
+      // Storage may be unavailable (private browsing, quota, disabled) — tasks still
+      // work for the session via React state, they just won't persist across reloads.
+    }
   }, [tasks])
 
   useEffect(() => {
@@ -51,7 +57,7 @@ function App() {
 
   function addTask(input: NewTaskInput) {
     const task: Task = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       title: input.title,
       space: input.space,
       priority: input.priority ?? 'none',

@@ -35,7 +35,11 @@ export function loadPreferences(): Preferences {
 
 export function savePreferences(prefs: Preferences) {
   const stored: StoredPreferences = { ...prefs, version: PREFS_VERSION }
-  localStorage.setItem(PREFS_KEY, JSON.stringify(stored))
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify(stored))
+  } catch {
+    // Storage may be unavailable — preferences still apply for the session via React state.
+  }
 }
 
 export function resolveTheme(theme: Preferences['theme']): 'light' | 'dark' {
