@@ -4,7 +4,7 @@ import { SettingsPanel } from './components/SettingsPanel'
 import { Sidebar, type View } from './components/Sidebar'
 import { generateId } from './lib/id'
 import { loadPreferences, resolveTheme, savePreferences, type Preferences } from './lib/preferences'
-import type { NewTaskInput, Task } from './lib/types'
+import { isTask, type NewTaskInput, type Task } from './lib/types'
 import { FocusModePage } from './pages/FocusModePage'
 import { InboxPage } from './pages/InboxPage'
 import { TodayPage } from './pages/TodayPage'
@@ -14,7 +14,12 @@ const TASKS_KEY = 'task-tracker:tasks'
 function loadTasks(): Task[] {
   try {
     const raw = localStorage.getItem(TASKS_KEY)
-    return raw ? (JSON.parse(raw) as Task[]) : []
+    if (!raw) return []
+    const parsed: unknown = JSON.parse(raw)
+    // Corrupted or foreign data under this key must never crash the app or be
+    // trusted as-is — validate shape and drop anything that doesn't match,
+    // rather than casting blindly and finding out later mid-render.
+    return Array.isArray(parsed) ? parsed.filter(isTask) : []
   } catch {
     return []
   }
